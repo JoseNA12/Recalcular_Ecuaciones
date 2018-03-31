@@ -35,16 +35,16 @@ sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2)
 variables que aparecen en dicho árbol; cada variable debe aparecer una sola vez en 
 la lista:--}
 
---Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z")
+--listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z"))
 --Árbol para (a+(2+c))*z> produce ["a","c","z"]
 
 esInt s = case reads s :: [(Integer, String)] of
   [(_, "")] -> True
   _         -> False
 
-remove elemento lista = filter (\e -> e/= elemento) lista
+--remove elemento lista = filter (\e -> e /= elemento) lista
 
---VALIDAR REPETIDOS Y ESPACIOS
+--VALIDAR ESPACIOS
 listaVar :: Arbol -> [String]
 listaVar (Hoja valor) = [valor] 
 listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
@@ -53,6 +53,20 @@ listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
     |(esInt (head (listaVar izq)) == False) = head [listaVar izq]
     |(esInt (head (listaVar der)) == False) = head [listaVar der]
     |otherwise = [""]
+
+quitarEspacios :: [String] -> [String]
+quitarEspacios (x:xs)
+    |length (xs) <= 0 = if [x]!!((length [x])-1) == "" then take ((length [x])-2) [x] else [x] --agarraba el ultimo sin importar el valor
+    |x == "" = quitarEspacios xs
+    |otherwise = [x] ++ quitarEspacios xs
+
+quitarRepetidos :: [String] -> [String]
+quitarRepetidos (x:xs)
+    |length (xs) <= 0 = [x]
+    |elem x xs == True = quitarRepetidos xs
+    |otherwise = [x] ++ quitarRepetidos xs
+
+--quitarRepetidos(quitarEspacios(listaVar()))
 
 
 {--5.	Elabore una función evalArb que tome un Arbol y una lista de valores, 
