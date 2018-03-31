@@ -24,12 +24,19 @@ Arbol asociado.:--}
 
 --			    var    ecuación   a mod
 sustVar :: String -> Arbol -> Arbol -> Arbol -- [String]
+sustVar "" arbolEcuacion arbolAMod = arbolAMod
 sustVar variable (Hoja valor_1) (Hoja valor_2) = Hoja valor_2
 sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2)
-    |variable == raiz_2 = (Nodo variable (Hoja "p") (Hoja "f"))
+
+    |variable == raiz_2 = (Nodo raiz_1 izq_1 der_1)
+
+    |otherwise = sustVar variable (Nodo raiz_1 izq_1 der_1) izq_2
 
     --(Nodo variable (Hoja "p") (Hoja "f"))
 
+preorder :: Arbol -> Int 
+preorder Hoja a = []
+preorder (Nodo v l r) = v : preorder l ++ preorder r
 
 {--4.	Elabore una función listaVar que tome un Arbol y devuelva una lista con las 
 variables que aparecen en dicho árbol; cada variable debe aparecer una sola vez en 
@@ -52,6 +59,7 @@ listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
     |otherwise = [""]
 
 quitarEspacios :: [String] -> [String]
+quitarEspacios [] = []
 quitarEspacios lista = [x | x <- lista, x `notElem` [""]]
 
 {--quitarEspacios2 :: [String] -> [String]
