@@ -22,7 +22,7 @@ Arbol asociado.:--}
 
 --sustVar "b" (Nodo "+" (Hoja "a") (Hoja "2")) (Nodo "*" (Hoja "b") (Hoja "p"))
 
---			var    ecuación   a mod
+--			    var    ecuación   a mod
 sustVar :: String -> Arbol -> Arbol -> Arbol -- [String]
 sustVar variable (Hoja valor_1) (Hoja valor_2) = Hoja valor_2
 sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2)
@@ -42,9 +42,6 @@ esInt s = case reads s :: [(Integer, String)] of
   [(_, "")] -> True
   _         -> False
 
---remove elemento lista = filter (\e -> e /= elemento) lista
-
---VALIDAR ESPACIOS
 listaVar :: Arbol -> [String]
 listaVar (Hoja valor) = [valor] 
 listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
@@ -55,16 +52,29 @@ listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
     |otherwise = [""]
 
 quitarEspacios :: [String] -> [String]
-quitarEspacios (x:xs)
+quitarEspacios lista = [x | x <- lista, x `notElem` [""]]
+
+{--quitarEspacios2 :: [String] -> [String]
+quitarEspacios2 (x:xs)
     |length (xs) <= 0 = if [x]!!((length [x])-1) == "" then take ((length [x])-2) [x] else [x] --agarraba el ultimo sin importar el valor
-    |x == "" = quitarEspacios xs
-    |otherwise = [x] ++ quitarEspacios xs
+    |x == "" = quitarEspacios2 xs
+    |otherwise = [x] ++ quitarEspacios2 xs--}
 
 quitarRepetidos :: [String] -> [String]
-quitarRepetidos (x:xs)
+quitarRepetidos [] = []
+quitarRepetidos [x] = [x]
+quitarRepetidos (x:xs) = x : [k  | k <- quitarRepetidos (xs), k /= x]
+
+{--quitarRepetidos2 :: [String] -> [String]
+quitarRepetidos2 (x:xs)
     |length (xs) <= 0 = [x]
-    |elem x xs == True = quitarRepetidos xs
-    |otherwise = [x] ++ quitarRepetidos xs
+    |elem (head xs) [x] = quitarRepetidos2 xs
+    |otherwise = [x] ++ quitarRepetidos2 xs--}
+
+-- quitarRepetidos ["a", "b", "b"]
+-- quitarRepetidos ["a","a", "b", "b", "a"]
+-- quitarRepetidos ["a","a", "b", "b", "a", "b"]
+-- quitarRepetidos ["a","a", "b", "c", "b", "a", "b", "c"]
 
 --quitarRepetidos(quitarEspacios(listaVar()))
 
