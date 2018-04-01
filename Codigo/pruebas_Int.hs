@@ -2,8 +2,8 @@
 en las hojas vienen constantes o el nombre de una variable, y en los nodos 
 internos viene una función binaria de enteros (+,-,*) y los dos subárboles.--}
 
-type ValoresFunc = String->String->Int
-data Arbol = Hoja String | Nodo String (Arbol) (Arbol) deriving (Show, Eq)
+type ValoresFunc = Int->Int->Int
+data Arbol = Hoja Int | Nodo String (Arbol) (Arbol) deriving (Show, Eq)
 
 
 {--2.	Elabore una función crearArbol que tome una tira de caracteres con una 
@@ -97,13 +97,7 @@ evalArb (Hoja valor) [valores] = (read (valor))::Int
 evalArb (Nodo operador i d) [valores] = 9
  
 
-convAInt :: String -> Int
-convAInt "" = 0
-convAInt caracter = read (caracter) :: Int
+convertirAInt :: String -> Int
+convertirAInt "" = 0
+convertirAInt caracter = read (caracter) :: Int
 
-evalOp :: String -> String -> String -> Int
-evalOp operador valor_1 valor_2
-    |operador == "+" = (+) (convAInt(valor_1)) (convAInt(valor_2))
-    |operador == "-" = (-) (convAInt(valor_1)) (convAInt(valor_2))
-    |operador == "*" = (*) (convAInt(valor_1)) (convAInt(valor_2))
-    |otherwise = 0
