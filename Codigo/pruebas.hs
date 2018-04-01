@@ -75,44 +75,30 @@ y devuelva el resultado de evaluar dicho Arbol usando esos valores; los valores
 se asocian con las variables siguiendo el orden especificado por el resultado 
 de listaVar para ese Arbol:--}
 
---evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z")) [1, 2, 3]
+--evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z")) (enlazarValores ["a", "c", "z"] [1, 2, 3])
+--evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z")) (enlazarValores (listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z"))) [1, 2, 3])
+--evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "e") (Hoja "c")))) (Hoja "z")) (enlazarValores (listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "e") (Hoja "c")))) (Hoja "z"))) [3, 2, 2, 2])
 
-evalArb :: Arbol -> [(String, Int)] -> String
-evalArb (Hoja valor) [(x, y)] = "0" 
+--evalArb Arbol (enlazarValores (listaVar Arbol) [1, 2, 3])
 
-
-                                --if (esInt valor) == False --si es variable
-                                 --then head [valores]
-                                 --else convAInt(valor) --si es numero               
-{--evalArb (Nodo operador izq der) [valores] -- evalOp operador (convAStr(evalArb i [valores])) (convAStr(evalArb d [valores]))
-   operador == "+" = evalArb izq [valores] --(+) (evalArb izq [valores]) (evalArb der [valores])
-   operador == "-" = evalArb der [valores] --(-) (evalArb izq [valores]) (evalArb der [valores])
-   operador == "*" = evalArb izq [valores] --(*) (evalArb izq [valores]) (evalArb der [valores])
-   otherwise = evalArb der [valores]--}
-
---(tail [valores])
+evalArb :: Arbol -> [(String, Int)] -> Int
+evalArb (Hoja valor) tupla = if (esInt valor) == False --si es variable/incognita
+                                    then (obtenerValor valor tupla) --devuelva el valor asosiado de la tupla: "b" [("a", 1), ("b", 2)]
+                                    else (convAInt valor) --si es numero dejelo asi y conviertalo en Int
+evalArb (Nodo operador izq der) tupla
+   |operador == "+" = (+) (evalArb izq tupla) (evalArb der tupla)
+   |operador == "-" = (-) (evalArb izq tupla) (evalArb der tupla)
+   |operador == "*" = (*) (evalArb izq tupla) (evalArb der tupla)
 
 convAInt :: String -> Int
 convAInt "" = 0
 convAInt caracter = read (caracter) :: Int
 
-convAStr :: Int -> String
-convAStr valor = show valor
-
-evalOp :: String -> String -> String -> Int
-evalOp operador valor_1 valor_2
-    |operador == "+" = (+) (convAInt(valor_1)) (convAInt(valor_2))
-    |operador == "-" = (-) (convAInt(valor_1)) (convAInt(valor_2))
-    |operador == "*" = (*) (convAInt(valor_1)) (convAInt(valor_2))
-    |otherwise = 0
-
-enlazarValores :: [String] -> [Int] -> [(String, Int)]
+enlazarValores :: [String] -> [Int] -> [(String, Int)] --enlazarValores ["a", "b", "c"] [1, 2, 3]
 enlazarValores (x:xs) (y:ys)
     |length (xs) == 0 = [(x, y)]
     |length (x:xs) == length (y:ys) = [(x, y)] ++ (enlazarValores xs ys)
     |otherwise = [("error", 0)]
-    
-existeVarEnArbol :: String -> Arbol -> Bool
-existeVarEnArbol "" (Hoja valor) = False
-existeVarEnArbol var (Nodo raiz izq der)
-    | var == raiz = True
+
+obtenerValor :: String -> [(String, Int)] -> Int
+obtenerValor var tupla = head [y | (x, y) <- tupla, x == var] -- obtenerValor "a" [("b", 5), ("a", 2)]
