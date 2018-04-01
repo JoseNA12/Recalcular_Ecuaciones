@@ -3,7 +3,7 @@ en las hojas vienen constantes o el nombre de una variable, y en los nodos
 internos viene una función binaria de enteros (+,-,*) y los dos subárboles.--}
 
 type ValoresFunc = Int->Int->Int
-data Arbol = Hoja Int | Nodo String (Arbol) (Arbol) deriving (Show, Eq)
+data Arbol = Hoja Int | Nodo ValoresFunc (Arbol) (Arbol) deriving (Show, Eq)
 
 
 {--2.	Elabore una función crearArbol que tome una tira de caracteres con una 

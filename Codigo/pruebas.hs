@@ -45,10 +45,6 @@ la lista:--}
 --listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z"))
 --Árbol para (a+(2+c))*z> produce ["a","c","z"]
 
-esInt s = case reads s :: [(Integer, String)] of
-  [(_, "")] -> True
-  _         -> False
-
 listaVar :: Arbol -> [String]
 listaVar (Hoja valor) = [valor] 
 listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
@@ -58,33 +54,20 @@ listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
     |(esInt (head (listaVar der)) == False) = head [listaVar der]
     |otherwise = [""]
 
+esInt s = case reads s :: [(Integer, String)] of
+  [(_, "")] -> True
+  _         -> False
+
 quitarEsp :: [String] -> [String]
 quitarEsp [] = []
 quitarEsp lista = [x | x <- lista, x `notElem` [""]]
-
-{--quitarEspacios2 :: [String] -> [String]
-quitarEspacios2 (x:xs)
-    |length (xs) <= 0 = if [x]!!((length [x])-1) == "" then take ((length [x])-2) [x] else [x] --agarraba el ultimo sin importar el valor
-    |x == "" = quitarEspacios2 xs
-    |otherwise = [x] ++ quitarEspacios2 xs--}
 
 quitarRep :: [String] -> [String]
 quitarRep [] = []
 quitarRep [x] = [x]
 quitarRep (x:xs) = x : [k  | k <- quitarRep (xs), k /= x]
 
-{--quitarRepetidos2 :: [String] -> [String]
-quitarRepetidos2 (x:xs)
-    |length (xs) <= 0 = [x]
-    |elem (head xs) [x] = quitarRepetidos2 xs
-    |otherwise = [x] ++ quitarRepetidos2 xs--}
-
--- quitarRepetidos ["a", "b", "b"]
--- quitarRepetidos ["a","a", "b", "b", "a"]
--- quitarRepetidos ["a","a", "b", "b", "a", "b"]
--- quitarRepetidos ["a","a", "b", "c", "b", "a", "b", "c"]
-
---quitarRepetidos(quitarEspacios(listaVar()))
+--quitarRep(quitarEsp(listaVar()))
 
 
 {--5.	Elabore una función evalArb que tome un Arbol y una lista de valores, 
@@ -92,14 +75,29 @@ y devuelva el resultado de evaluar dicho Arbol usando esos valores; los valores
 se asocian con las variables siguiendo el orden especificado por el resultado 
 de listaVar para ese Arbol:--}
 
-evalArb :: Arbol -> [Int] -> Int
-evalArb (Hoja valor) [valores] = (read (valor))::Int
-evalArb (Nodo operador i d) [valores] = 9
- 
+--evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z")) [1, 2, 3]
+
+evalArb :: Arbol -> [(String, Int)] -> String
+evalArb (Hoja valor) [(x, y)] = "0" 
+
+
+                                --if (esInt valor) == False --si es variable
+                                 --then head [valores]
+                                 --else convAInt(valor) --si es numero               
+{--evalArb (Nodo operador izq der) [valores] -- evalOp operador (convAStr(evalArb i [valores])) (convAStr(evalArb d [valores]))
+   operador == "+" = evalArb izq [valores] --(+) (evalArb izq [valores]) (evalArb der [valores])
+   operador == "-" = evalArb der [valores] --(-) (evalArb izq [valores]) (evalArb der [valores])
+   operador == "*" = evalArb izq [valores] --(*) (evalArb izq [valores]) (evalArb der [valores])
+   otherwise = evalArb der [valores]--}
+
+--(tail [valores])
 
 convAInt :: String -> Int
 convAInt "" = 0
 convAInt caracter = read (caracter) :: Int
+
+convAStr :: Int -> String
+convAStr valor = show valor
 
 evalOp :: String -> String -> String -> Int
 evalOp operador valor_1 valor_2
@@ -107,3 +105,14 @@ evalOp operador valor_1 valor_2
     |operador == "-" = (-) (convAInt(valor_1)) (convAInt(valor_2))
     |operador == "*" = (*) (convAInt(valor_1)) (convAInt(valor_2))
     |otherwise = 0
+
+enlazarValores :: [String] -> [Int] -> [(String, Int)]
+enlazarValores (x:xs) (y:ys)
+    |length (xs) == 0 = [(x, y)]
+    |length (x:xs) == length (y:ys) = [(x, y)] ++ (enlazarValores xs ys)
+    |otherwise = [("error", 0)]
+    
+existeVarEnArbol :: String -> Arbol -> Bool
+existeVarEnArbol "" (Hoja valor) = False
+existeVarEnArbol var (Nodo raiz izq der)
+    | var == raiz = True
