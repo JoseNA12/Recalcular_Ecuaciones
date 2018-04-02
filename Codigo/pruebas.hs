@@ -22,17 +22,13 @@ Arbol asociado.:--}
 
 --sustVar "b" (Nodo "+" (Hoja "a") (Hoja "2")) (Nodo "*" (Hoja "b") (Hoja "p"))
 
---			    var    ecuación   a mod
+--			 var    ecuación   a mod
 sustVar :: String -> Arbol -> Arbol -> Arbol -- [String]
 sustVar "" arbolEcuacion arbolAMod = arbolAMod
-sustVar variable (Hoja valor_1) (Hoja valor_2) = Hoja valor_2
+sustVar variable (Hoja valor_1) (Hoja valor_2) = (Hoja valor_2)
 sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2)
-
-    |variable == raiz_2 = (Nodo raiz_1 izq_1 der_1)
-
-    |otherwise = sustVar variable (Nodo raiz_1 izq_1 der_1) izq_2
-
-    --(Nodo variable (Hoja "p") (Hoja "f"))
+    |variable == raiz_2 = sustVar raiz_1 izq_1 der_1
+    |otherwise = sustVar raiz_2 izq_2 der_2
 
 nHojas :: Arbol -> Int
 nHojas (Hoja _) = 1
