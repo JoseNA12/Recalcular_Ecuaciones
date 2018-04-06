@@ -22,13 +22,14 @@ Arbol asociado.:--}
 
 --sustVar "b" (Nodo "+" (Hoja "a") (Hoja "2")) (Nodo "*" (Hoja "b") (Hoja "p"))
 
---			 var    ecuación   a mod
-sustVar :: String -> Arbol -> Arbol -> Arbol -- [String]
-sustVar "" arbolEcuacion arbolAMod = arbolAMod
-sustVar variable (Hoja valor_1) (Hoja valor_2) = (Hoja valor_2)
-sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2)
-    |variable == raiz_2 = sustVar raiz_1 izq_1 der_1
-    |otherwise = sustVar raiz_2 izq_2 der_2
+--			 var    ecuación   a mod    a mod
+sustVar :: String -> Arbol -> Arbol -> Arbol -> Arbol --[String]
+sustVar variable (Hoja valor_1) (Hoja valor_2) (Hoja valor_3) = if ((variable == valor_2) || (variable == valor_3)) == True
+    then (Hoja valor_3) 
+    else (Hoja valor_2)
+sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2) (Nodo raiz_3 izq_3 der_3)
+    |variable == raiz_2 = (Nodo raiz_1 izq_1 der_1)
+    |otherwise = sustVar variable (Nodo raiz_1 izq_1 der_1) izq_2 der_2
 
 nHojas :: Arbol -> Int
 nHojas (Hoja _) = 1
@@ -50,7 +51,7 @@ listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
     |(esInt (head (listaVar der)) == False) = head [listaVar der]
     |otherwise = [""]
 
-esInt s = case reads s :: [(Integer, String)] of
+esInt var = case reads var :: [(Integer, String)] of
   [(_, "")] -> True
   _         -> False
 
