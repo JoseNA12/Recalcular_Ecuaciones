@@ -2,18 +2,24 @@
 en las hojas vienen constantes o el nombre de una variable, y en los nodos 
 internos viene una función binaria de enteros (+,-,*) y los dos subárboles.--}
 
-type ValoresFunc = String->String->Int
-data Arbol = Hoja String | Nodo String (Arbol) (Arbol) deriving (Show, Eq)
-
+type IntFunc = Int -> Int -> Int
+--data Hoja = String | Int deriving (Show)
+data Arbol = Hoja String | Nodo String (Arbol) (Arbol) deriving (Show)
 
 {--2.	Elabore una función crearArbol que tome una tira de caracteres con una 
 operación binaria simple ("operando  operación  operando") y devuelva un árbol 
 como del punto 1:--}
 
-crearArbol :: String -> Arbol
-crearArbol ec = if length (words ec) == 1 
-    then Hoja ec
-    else Nodo (words ec !!1) (crearArbol (words ec !!0)) (crearArbol (words ec !!2))
+crearArbol :: [String] -> Arbol
+crearArbol ec = if length (ec) == 1 
+    then Hoja (head ec)
+    else Nodo (ec !!1) (crearArbol [head ec]) (crearArbol [last ec])
+
+obtOperacion :: String -> Int
+obtOperacion op = case op of 
+             "+" ->  1--(+)
+             "-" ->  2--(-)
+             "*" ->  3--(*)
 
 
 {--3.	Elabore una función sustVar que tome una variable y un Arbol que representa 
@@ -99,3 +105,4 @@ enlazarValores (x:xs) (y:ys)
 
 obtenerValor :: String -> [(String, Int)] -> Int
 obtenerValor var tupla = head [y | (x, y) <- tupla, x == var] -- obtenerValor "a" [("b", 5), ("a", 2)]
+

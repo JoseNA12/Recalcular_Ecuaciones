@@ -23,7 +23,11 @@
 -- Luego de interpretar el comando, se invoca recursivamente 
 -- el ciclo principal con el nuevo estado si es del caso.
 
-type Estado = [(String, String, String, String, String)]
+type Estado = [(String, [String], Arbol)] --, [String], Arbol)]
+
+type IntFunc = Int -> Int -> Int
+--data Hoja = String | Int deriving (Show)
+data Arbol = Hoja String | Nodo String (Arbol) (Arbol) deriving (Show)
 
 main :: IO ()
 main = do 
@@ -70,7 +74,7 @@ procesar comando estado =
      -- dependiendo de la primera palabra se invoca a la
      -- función que implementa dicho comando
      case tokens!!0 of
-          "def" -> ie (tail tokens) estado
+          "ie" -> ie (tail tokens) estado
           --"borrar" -> cmd_borrar (tail tokens) estado
           "imp" -> cmd_imp estado 
           -- comando fin: retornar tripleta que finaliza ciclo          
@@ -124,11 +128,36 @@ cmd_desconocido cmd comando estado = (False, estado, mensaje)
 cmd_imp :: Estado -> (Bool, Estado, String)
 cmd_imp estado = (False, estado, show estado)
 
---Insertar ecuacion
-ie::[String] -> Estado -> (Bool, Estado, String)
+
+
+
+
+
+
+--Insertar ecuacion (ie)
+{--
+ie :: [String] -> Estado -> (Bool, Estado, String)
 ie tokens estado = (False, nuevoestado, mensaje)
-       where nuevoestado = estado ++ [(tokens!!0, tokens!!1, tokens!!2, tokens!!3, tokens!!4)]
-             mensaje = "Definido " ++ tokens!!0
+       where nuevoestado = estado ++ [(tokens!!0, quitarRep(quitarEsp(listaVar(crearArbol(drop 2 tokens)))), crearArbol(drop 2 tokens))] --Variable, Lista variables, Arbol
+             mensaje = "Se definido " ++ tokens!!0
+--}
+
+ie :: [String] -> Estado -> (Bool, Estado, String)
+ie tokens estado 
+    | (valid_1_ie (tokens!!0) (drop 2 tokens)) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' se encuentra en la expresión!.")
+    | otherwise = (False, nuevoestado, mensaje)
+       where nuevoestado = estado ++ [(tokens!!0, quitarRep(quitarEsp(listaVar(crearArbol(drop 2 tokens)))), crearArbol(drop 2 tokens))] --Variable, Lista variables, Arbol
+             mensaje = "Se definido " ++ tokens!!0
+
+
+--quitarRep(quitarEsp(listaVar(crearArbol(drop 4 tokens))))
+--quitarRep(quitarEsp(listaVar(crearArbol(drop 4 (tokens!!0)))))
+--quitarRep(quitarEsp(listaVar(crearArbol(drop 4 tokens))))
+
+valid_1_ie :: String -> [String] -> Bool -- x = x + 2
+valid_1_ie var ec = if var `elem` ec
+                  then True
+                  else False
 
 --Mostrar-variable (mv):
 
@@ -143,3 +172,107 @@ ie tokens estado = (False, nuevoestado, mensaje)
 --Evaluar-todo (et):
 
 --Terminar (fin)
+
+
+
+{--2. Elabore una función crearArbol que tome una tira de caracteres con una 
+operación binaria simple ("operando  operación  operando") y devuelva un árbol 
+como del punto 1:--}
+
+crearArbol :: [String] -> Arbol
+crearArbol ec = if length (ec) == 1 
+    then Hoja (head ec) --["a"] -> "a"
+    else Nodo (ec !!1) (crearArbol [head ec]) (crearArbol [last ec])
+
+obtOperacion :: String -> Int
+obtOperacion op = case op of 
+             "+" ->  1--(+)
+             "-" ->  2--(-)
+             "*" ->  3--(*)
+
+
+{--3. Elabore una función sustVar que tome una variable y un Arbol que representa 
+su ecuación y sustituya en otro Arbol las apariciones de esa variable por copias del 
+Arbol asociado.:--}
+
+--sustVar "b" (Nodo "+" (Hoja "a") (Hoja "2")) (Nodo "*" (Hoja "b") (Hoja "p"))
+
+--       var    ecuación   a mod    a mod
+sustVar :: String -> Arbol -> Arbol -> Arbol -> Arbol --[String]
+sustVar variable (Hoja valor_1) (Hoja valor_2) (Hoja valor_3) = if ((variable == valor_2) || (variable == valor_3)) == True
+    then (Hoja valor_3) 
+    else (Hoja valor_2)
+sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2) (Nodo raiz_3 izq_3 der_3)
+    |variable == raiz_2 = (Nodo raiz_1 izq_1 der_1)
+    |otherwise = sustVar variable (Nodo raiz_1 izq_1 der_1) izq_2 der_2
+
+nHojas :: Arbol -> Int
+nHojas (Hoja _) = 1
+nHojas (Nodo x i d) = nHojas i + nHojas d
+
+
+{--4. Elabore una función listaVar que tome un Arbol y devuelva una lista con las 
+variables que aparecen en dicho árbol; cada variable debe aparecer una sola vez en 
+la lista:--}
+
+--listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z"))
+--Árbol para (a+(2+c))*z> produce ["a","c","z"]
+
+listaVar :: Arbol -> [String]
+listaVar (Hoja valor) = [valor] 
+listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
+    |(esInt (head (listaVar izq)) == False) && (esInt (head (listaVar der)) == False) 
+                     = head [listaVar izq] ++ head [listaVar der]
+    |(esInt (head (listaVar izq)) == False) = head [listaVar izq]
+    |(esInt (head (listaVar der)) == False) = head [listaVar der]
+    |otherwise = [""]
+
+esInt var = case reads var :: [(Integer, String)] of
+  [(_, "")] -> True
+  _         -> False
+
+quitarEsp :: [String] -> [String]
+quitarEsp [] = []
+quitarEsp lista = [x | x <- lista, x `notElem` [""]]
+
+quitarRep :: [String] -> [String]
+quitarRep [] = []
+quitarRep [x] = [x]
+quitarRep (x:xs) = x : [k  | k <- quitarRep (xs), k /= x]
+
+--quitarRep(quitarEsp(listaVar()))
+
+
+{--5. Elabore una función evalArb que tome un Arbol y una lista de valores, 
+y devuelva el resultado de evaluar dicho Arbol usando esos valores; los valores 
+se asocian con las variables siguiendo el orden especificado por el resultado 
+de listaVar para ese Arbol:--}
+
+--evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z")) (enlazarValores ["a", "c", "z"] [1, 2, 3])
+--evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z")) (enlazarValores (listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z"))) [1, 2, 3])
+--evalArb (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "e") (Hoja "c")))) (Hoja "z")) (enlazarValores (listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "e") (Hoja "c")))) (Hoja "z"))) [3, 2, 2, 2])
+
+--evalArb Arbol (enlazarValores (listaVar Arbol) [1, 2, 3])
+
+evalArb :: Arbol -> [(String, Int)] -> Int
+evalArb (Hoja valor) tupla = if (esInt valor) == False --si es variable/incognita
+                                    then (obtenerValor valor tupla) --devuelva el valor asosiado de la tupla: "b" [("a", 1), ("b", 2)]
+                                    else (convAInt valor) --si es numero dejelo asi y conviertalo en Int
+evalArb (Nodo operador izq der) tupla
+   |operador == "+" = (+) (evalArb izq tupla) (evalArb der tupla)
+   |operador == "-" = (-) (evalArb izq tupla) (evalArb der tupla)
+   |operador == "*" = (*) (evalArb izq tupla) (evalArb der tupla)
+
+convAInt :: String -> Int
+convAInt "" = 0
+convAInt caracter = read (caracter) :: Int
+
+enlazarValores :: [String] -> [Int] -> [(String, Int)] --enlazarValores ["a", "b", "c"] [1, 2, 3]
+enlazarValores (x:xs) (y:ys)
+    |length (xs) == 0 = [(x, y)]
+    |length (x:xs) == length (y:ys) = [(x, y)] ++ (enlazarValores xs ys)
+    |otherwise = [("error", 0)]
+
+obtenerValor :: String -> [(String, Int)] -> Int
+obtenerValor var tupla = head [y | (x, y) <- tupla, x == var] -- obtenerValor "a" [("b", 5), ("a", 2)]
+
