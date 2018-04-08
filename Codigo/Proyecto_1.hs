@@ -146,9 +146,10 @@ ie :: [String] -> Estado -> (Bool, Estado, String)
 ie tokens estado 
     | (valid_1_ie (tokens!!0) (drop 2 tokens)) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' se encuentra en la expresión!.")
     | (valid_2_ie (tokens!!0) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' ya se encuentra definida!.")
+    | ()
     | otherwise = (False, nuevoestado, mensaje)
        where nuevoestado = estado ++ [(tokens!!0, quitarRep(quitarEsp(listaVar(crearArbol(drop 2 tokens)))), crearArbol(drop 2 tokens))] --Variable, Lista variables, Arbol
-             mensaje = "Se definido " ++ tokens!!0
+             mensaje = "Se definió " ++ tokens!!0
 
 
 --quitarRep(quitarEsp(listaVar(crearArbol(drop 4 tokens))))
@@ -163,9 +164,17 @@ valid_1_ie var ec = if var `elem` ec
 valid_2_ie :: String -> Estado -> Bool  -- (x = y + b), (x = 2 * q)
 valid_2_ie var estado
     | length(estado) <= 0 = False
-    | var == fst (head estado) = True
+    | var == (fst3 (head estado)) = True
     | otherwise = valid_2_ie var (tail estado)
 
+fst3 :: (a, b, c) -> a
+fst3 (x, _, _) = x
+
+valid_3_ie :: String -> Estado -> Bool  -- (x = y + b), (x = 2 * q)
+valid_3_ie var estado
+    | length(estado) <= 0 = False
+    | var == (fst3 (head estado)) = True
+    | otherwise = valid_2_ie var (tail estado)
 
 --Mostrar-variable (mv):
 
