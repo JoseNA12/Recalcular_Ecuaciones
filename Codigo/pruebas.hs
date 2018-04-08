@@ -28,14 +28,10 @@ Arbol asociado.:--}
 
 --sustVar "b" (Nodo "+" (Hoja "a") (Hoja "2")) (Nodo "*" (Hoja "b") (Hoja "p"))
 
---			 var    ecuación   a mod    a mod
-sustVar :: String -> Arbol -> Arbol -> Arbol -> Arbol --[String]
-sustVar variable (Hoja valor_1) (Hoja valor_2) (Hoja valor_3) = if ((variable == valor_2) || (variable == valor_3)) == True
-    then (Hoja valor_3) 
-    else (Hoja valor_2)
-sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2) (Nodo raiz_3 izq_3 der_3)
-    |variable == raiz_2 = (Nodo raiz_1 izq_1 der_1)
-    |otherwise = sustVar variable (Nodo raiz_1 izq_1 der_1) izq_2 der_2
+--			 var    ecuación   a mod
+sustVar :: String -> Arbol -> Arbol -> Arbol --[String]
+sustVar variable (Hoja valor_1) (Hoja valor_2)
+
 
 nHojas :: Arbol -> Int
 nHojas (Hoja _) = 1
@@ -47,6 +43,14 @@ la lista:--}
 
 --listaVar (Nodo "*" ((Nodo "+" (Hoja "a") (Nodo "+" (Hoja "2") (Hoja "c")))) (Hoja "z"))
 --Árbol para (a+(2+c))*z> produce ["a","c","z"]
+
+listaVar2 :: Arbol -> [String]
+listaVar2 (Hoja valor) = if (esInt valor) == False
+                         then [valor]
+                         else [""]
+listaVar2 (Nodo raiz izq der) = quitarRep(quitarEsp(valores))
+       where valores = listaVar2 izq ++ listaVar2 der
+
 
 listaVar :: Arbol -> [String]
 listaVar (Hoja valor) = [valor] 

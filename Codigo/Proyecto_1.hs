@@ -23,7 +23,7 @@
 -- Luego de interpretar el comando, se invoca recursivamente 
 -- el ciclo principal con el nuevo estado si es del caso.
 
-type Estado = [(String, [String], Arbol)] --, [String], Arbol)]
+type Estado = [(String, [String], Arbol, [String], Arbol)] --, [String], Arbol)]
 
 type IntFunc = Int -> Int -> Int
 --data Hoja = String | Int deriving (Show)
@@ -144,11 +144,12 @@ ie tokens estado = (False, nuevoestado, mensaje)
 
 ie :: [String] -> Estado -> (Bool, Estado, String)
 ie tokens estado 
+    | (valid_Fort_ie tokens) == True = (False, estado, "Error, ecuación inválida!.")
     | (valid_1_ie (tokens!!0) (drop 2 tokens)) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' se encuentra en la expresión!.")
     | (valid_2_ie (tokens!!0) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' ya se encuentra definida!.")
-    | ()
+    | (valid_3_ie (tokens) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' produce un ciclo!.")
     | otherwise = (False, nuevoestado, mensaje)
-       where nuevoestado = estado ++ [(tokens!!0, quitarRep(quitarEsp(listaVar(crearArbol(drop 2 tokens)))), crearArbol(drop 2 tokens))] --Variable, Lista variables, Arbol
+       where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(crearArbol(drop 2 tokens)), (Nodo "*" (Hoja "Vacio") (Hoja "Vacio")))] --Variable, Lista variables, Arbol
              mensaje = "Se definió " ++ tokens!!0
 
 
@@ -156,25 +157,45 @@ ie tokens estado
 --quitarRep(quitarEsp(listaVar(crearArbol(drop 4 (tokens!!0)))))
 --quitarRep(quitarEsp(listaVar(crearArbol(drop 4 tokens))))
 
+--Rechazar la ecuación si tiene errores sintácticos en ecuación 
+valid_Fort_ie :: [String] -> Bool
+valid_Fort_ie tokens
+    | length(tokens) == 0 = True
+    | length(tokens) /= 5 = True
+    | esInt(head tokens) = True
+    | (tokens!!3 /= "+") && (tokens!!3 /= "-") && (tokens!!3 /= "*") = True
+    | otherwise = False
+
+--La variable a la izquierda de la ecuación no debe tener una ecuación previa
 valid_1_ie :: String -> [String] -> Bool -- x = x + 2
 valid_1_ie var ec = if var `elem` ec
                   then True
                   else False
 
+--La variable a la izquierda de la ecuación no debe aparecer a la derecha de esa misma ecuación
 valid_2_ie :: String -> Estado -> Bool  -- (x = y + b), (x = 2 * q)
 valid_2_ie var estado
     | length(estado) <= 0 = False
-    | var == (fst3 (head estado)) = True
+    | var == (fstEstado (head estado)) = True
     | otherwise = valid_2_ie var (tail estado)
 
-fst3 :: (a, b, c) -> a
-fst3 (x, _, _) = x
-
-valid_3_ie :: String -> Estado -> Bool  -- (x = y + b), (x = 2 * q)
+--o la nueva ecuación no debe formar un ciclo de dependencias con las ecuaciones anteriores; 
+--esto es para cada una de las ecuaciones anteriores, revisar que la variable de la nueva ecuación 
+--no aparece a la derecha de una ecuación anterior y que la variable de esa ecuación anterior no 
+--aparece a la derecha de la nueva ecuación
+valid_3_ie :: [String] -> Estado -> Bool -- (x = 2 - y), (y = x * 6)
 valid_3_ie var estado
     | length(estado) <= 0 = False
-    | var == (fst3 (head estado)) = True
-    | otherwise = valid_2_ie var (tail estado)
+    | ((var!!0) `elem` (frhEstado (head estado))) && ((fstEstado (head estado)) `elem` (drop 2 var)) = True
+    | otherwise = valid_3_ie var (tail estado)
+
+
+fstEstado :: (var, lista1, arbol1, lista2, arbol2) -> var
+fstEstado (x, _, _, _, _) = x
+
+frhEstado :: (var, lista1, arbol1, lista2, arbol2) -> lista2
+frhEstado (_, _, _, x, _) = x
+
 
 --Mostrar-variable (mv):
 
@@ -236,13 +257,11 @@ la lista:--}
 --Árbol para (a+(2+c))*z> produce ["a","c","z"]
 
 listaVar :: Arbol -> [String]
-listaVar (Hoja valor) = [valor] 
-listaVar (Nodo raiz izq der) --head para obtener el string, ["a"] -> "a"
-    |(esInt (head (listaVar izq)) == False) && (esInt (head (listaVar der)) == False) 
-                     = head [listaVar izq] ++ head [listaVar der]
-    |(esInt (head (listaVar izq)) == False) = head [listaVar izq]
-    |(esInt (head (listaVar der)) == False) = head [listaVar der]
-    |otherwise = [""]
+listaVar (Hoja valor) = if (esInt valor) == False
+                         then [valor]
+                         else [""]
+listaVar (Nodo raiz izq der) = quitarRep(quitarEsp(valores))
+       where valores = listaVar izq ++ listaVar der
 
 esInt var = case reads var :: [(Integer, String)] of
   [(_, "")] -> True
