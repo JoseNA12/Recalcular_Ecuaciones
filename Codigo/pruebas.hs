@@ -15,11 +15,6 @@ crearArbol ec = if length (ec) == 1
     then Hoja (head ec)
     else Nodo (ec !!1) (crearArbol [head ec]) (crearArbol [last ec])
 
-obtOperacion :: String -> Int
-obtOperacion op = case op of 
-             "+" ->  1--(+)
-             "-" ->  2--(-)
-             "*" ->  3--(*)
 
 
 {--3.	Elabore una función sustVar que tome una variable y un Arbol que representa 
@@ -30,12 +25,29 @@ Arbol asociado.:--}
 
 --			 var    ecuación   a mod
 sustVar :: String -> Arbol -> Arbol -> Arbol --[String]
-sustVar variable (Hoja valor_1) (Hoja valor_2)
+sustVar var (Hoja valor_1) (Hoja valor_2) = (Hoja valor_2)
+sustVar var (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2) = sustVar var (Nodo raiz_1 izq_1 der_1) izq_2
 
 
 nHojas :: Arbol -> Int
 nHojas (Hoja _) = 1
 nHojas (Nodo x i d) = nHojas i + nHojas d
+
+
+delete :: Int -> Arbol -> Arbol
+delete k Hoja = Hoja
+delete k x@(Nodo a l r)
+  | (k < a) = delete k l
+  | (k > a) = delete k r
+  | (k == a) = delete' k x
+
+delete' :: Int -> Arbol -> Arbol
+delete' k (Nodo a l r)
+  | (l == Hoja)  = r
+  | (r == Hoja)  = l
+  | otherwise = let (k,t) = maxAndDelete l
+                in Nodo k t r
+
 
 {--4.	Elabore una función listaVar que tome un Arbol y devuelva una lista con las 
 variables que aparecen en dicho árbol; cada variable debe aparecer una sola vez en 

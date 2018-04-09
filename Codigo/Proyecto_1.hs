@@ -76,7 +76,7 @@ procesar comando estado =
      case tokens!!0 of
           "ie" -> ie (tail tokens) estado
           --"borrar" -> cmd_borrar (tail tokens) estado
-          "imp" -> cmd_imp estado 
+          "imp" -> cmd_imp estado
           -- comando fin: retornar tripleta que finaliza ciclo          
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
@@ -117,6 +117,7 @@ borrar v1 ((v2,y):estado) = let (res,nuevoestado) = borrar v1 estado
                                       else  (res, (v2,y):nuevoestado)--}
 
 
+
 -- función que maneja un comando desconocido
 --
 cmd_desconocido :: String -> String -> Estado -> (Bool, Estado, String)
@@ -130,18 +131,11 @@ cmd_imp estado = (False, estado, show estado)
 
 
 
-
+cmd_ie :: [String] -> Estado -> (Bool, Estado, String)
 
 
 
 --Insertar ecuacion (ie)
-{--
-ie :: [String] -> Estado -> (Bool, Estado, String)
-ie tokens estado = (False, nuevoestado, mensaje)
-       where nuevoestado = estado ++ [(tokens!!0, quitarRep(quitarEsp(listaVar(crearArbol(drop 2 tokens)))), crearArbol(drop 2 tokens))] --Variable, Lista variables, Arbol
-             mensaje = "Se definido " ++ tokens!!0
---}
-
 ie :: [String] -> Estado -> (Bool, Estado, String)
 ie tokens estado 
     | (valid_Fort_ie tokens) == True = (False, estado, "Error, ecuación inválida!.")
@@ -151,11 +145,6 @@ ie tokens estado
     | otherwise = (False, nuevoestado, mensaje)
        where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(crearArbol(drop 2 tokens)), (Nodo "*" (Hoja "Vacio") (Hoja "Vacio")))] --Variable, Lista variables, Arbol
              mensaje = "Se definió " ++ tokens!!0
-
-
---quitarRep(quitarEsp(listaVar(crearArbol(drop 4 tokens))))
---quitarRep(quitarEsp(listaVar(crearArbol(drop 4 (tokens!!0)))))
---quitarRep(quitarEsp(listaVar(crearArbol(drop 4 tokens))))
 
 --Rechazar la ecuación si tiene errores sintácticos en ecuación 
 valid_Fort_ie :: [String] -> Bool
@@ -193,8 +182,17 @@ valid_3_ie var estado
 fstEstado :: (var, lista1, arbol1, lista2, arbol2) -> var
 fstEstado (x, _, _, _, _) = x
 
+scdEstado:: (var, lista1, arbol1, lista2, arbol2) -> lista1
+scdEstado (_, x, _, _, _) = x
+
+trdEstado:: (var, lista1, arbol1, lista2, arbol2) -> arbol1
+trdEstado (_, _, x, _, _) = x
+
 frhEstado :: (var, lista1, arbol1, lista2, arbol2) -> lista2
 frhEstado (_, _, _, x, _) = x
+
+fveEstado :: (var, lista1, arbol1, lista2, arbol2) -> arbol2
+fveEstado (_, _, _, _, x) = x
 
 
 --Mostrar-variable (mv):
@@ -211,6 +209,13 @@ frhEstado (_, _, _, x, _) = x
 
 --Terminar (fin)
 
+--MostrarArbol (mostArbol)
+mostArbol :: Arbol -> String
+mostArbol (Hoja valor) = valor
+mostArbol (Nodo x i d) = "(" ++ (mostArbol i) ++ x  ++ (mostArbol d) ++ ")"
+
+quitarParent :: String -> String --"( (3 + (x + 2)) * 2 )"
+quitarParent ecuacion = reverse (drop 1 (reverse (drop 1 ecuacion)))
 
 
 {--2. Elabore una función crearArbol que tome una tira de caracteres con una 
