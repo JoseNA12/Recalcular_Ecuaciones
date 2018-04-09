@@ -72,7 +72,7 @@ procesar comando estado =
      case tokens!!0 of
           "def" -> cmd_def (tail tokens) estado
           "borrar" -> cmd_borrar (tail tokens) estado
-          "imp" -> cmd_imp estado 
+          "imp" -> cmd_imp estado
           -- comando fin: retornar tripleta que finaliza ciclo          
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado

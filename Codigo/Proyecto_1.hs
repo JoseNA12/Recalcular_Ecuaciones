@@ -102,11 +102,11 @@ cmd_borrar (v:_) estado = let (res, nuevoestado) = borrar v estado
 
 -- función que busca un nombre en el estado
 -- 
-{--buscar :: String -> Estado -> (Bool, String)
-buscar _ [] = (False, "")
-buscar v1 ((v2,y):estado) = if v1 == v2
-                               then (True,y)
-                               else  buscar v1 estado--}
+buscar :: String -> Estado -> Bool
+buscar _ [] = False
+buscar v1 ((v2 ,[y], q, [w], p):estado) = if v1 == v2
+                                         then True
+                                         else buscar v1 estado
 
 -- función que elimina un par del estado
 -- 
@@ -117,10 +117,6 @@ borrar v1 ((v2,y):estado) = let (res,nuevoestado) = borrar v1 estado
                                       then (True,estado)
                                       else  (res, (v2,y):nuevoestado)--}
 
-
---
-cmd_mv :: [String] -> Estado -> (Bool, String)
-cmd_mv [] estado = (False, "No se ingresó la incognita")
 
 
 -- función que maneja un comando desconocido
@@ -147,9 +143,9 @@ ie tokens estado
     | (valid_1_ie (tokens!!0) (drop 2 tokens)) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' se encuentra en la expresión!.")
     | (valid_2_ie (tokens!!0) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' ya se encuentra definida!.")
     | (valid_3_ie (tokens) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' produce un ciclo!.")
-    | otherwise = (False, nuevoestado, mensaje)
+    | otherwise = (False, nuevoestado, show (mv (tokens!!0) nuevoestado))
        where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(crearArbol(drop 2 tokens)), (Nodo "*" (Hoja "Vacio") (Hoja "Vacio")))] --Variable, Lista variables, Arbol
-             mensaje = "Se definió " ++ tokens!!0
+             --mensaje = "Se definió " ++ tokens!!0
 
 --Rechazar la ecuación si tiene errores sintácticos en ecuación 
 valid_Fort_ie :: [String] -> Bool
@@ -201,9 +197,16 @@ fveEstado (_, _, _, _, x) = x
 
 
 --Mostrar-variable (mv):
-mv :: [String] -> Estado -> (String, [String], String, [String], String)
+mv :: String -> Estado -> (String, [String], String, [String], String)
 mv var estado 
-    | (head var) == (fstEstado (head estado)) = (fstEstado (head estado), scdEstado (head estado), quitarParent(mostArbol(trdEstado (head estado))), frhEstado (head estado), )
+    | var == (fstEstado (head estado)) = (fstEstado (head estado), scdEstado (head estado), quitarParent(mostArbol(trdEstado (head estado))), frhEstado (head estado), quitarParent(mostArbol(fveEstado (head estado))))
+
+cmd_mv :: [String] -> Estado -> (Bool, Estado, String)
+cmd_mv var estado
+    | length(var) <= 0 = (False, estado, "Error, ingrese la incognita!.")
+    | length(var) /= 1 = (False, estado, "Error, debe ingresar solo una incognita!.")
+    | (buscar (head var) estado) == True = (False, estado, (show (mv (head var) estado)))
+    | otherwise = (False, estado, "La incognita no existe!.")
 
 --Mostrar-ambiente (ma):
 
