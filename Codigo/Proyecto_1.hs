@@ -77,6 +77,7 @@ procesar comando estado =
           "ie" -> ie (tail tokens) estado
           --"borrar" -> cmd_borrar (tail tokens) estado
           "imp" -> cmd_imp estado
+          "mv" -> cmd_mv (tail tokens) estado
           -- comando fin: retornar tripleta que finaliza ciclo          
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
@@ -117,6 +118,10 @@ borrar v1 ((v2,y):estado) = let (res,nuevoestado) = borrar v1 estado
                                       else  (res, (v2,y):nuevoestado)--}
 
 
+--
+cmd_mv :: [String] -> Estado -> (Bool, String)
+cmd_mv [] estado = (False, "No se ingresó la incognita")
+
 
 -- función que maneja un comando desconocido
 --
@@ -131,7 +136,7 @@ cmd_imp estado = (False, estado, show estado)
 
 
 
-cmd_ie :: [String] -> Estado -> (Bool, Estado, String)
+
 
 
 
@@ -196,6 +201,9 @@ fveEstado (_, _, _, _, x) = x
 
 
 --Mostrar-variable (mv):
+mv :: [String] -> Estado -> (String, [String], String, [String], String)
+mv var estado 
+    | (head var) == (fstEstado (head estado)) = (fstEstado (head estado), scdEstado (head estado), quitarParent(mostArbol(trdEstado (head estado))), frhEstado (head estado), )
 
 --Mostrar-ambiente (ma):
 
