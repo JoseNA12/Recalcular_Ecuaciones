@@ -241,17 +241,22 @@ cmd_ma tokens estado
 --Calcular-variable-original (cvo):
 cmd_cvo :: [String] -> Estado -> (Bool, Estado, String)
 cmd_cvo tokens estado 
-    | length(tokens) /= 3 = (False, estado, "Error, se debe ingresar una incognita con dos variables enteras!.")
+    | length(tokens) <= 0 = (False, estado, "Error, ingrese una expresión a evaluar!.")
     | esInt(head tokens) == True = (False, estado, "Error, se debe ingresar una incognita válida!.")
     | (fst (buscar (head tokens) estado)) == False = (False, estado, "Error, la incognita ingresada aún no se registrado!.")
-    
-    | (esInt(tokens!!1) && esInt(tokens!!2)) /= True = (False, estado, "Error, las variables ingresadas deben ser números enteros!.")
-    | otherwise = (False, estado, show(evalArb(buscarArbOrig (tokens!!0) estado) (enlazarValores (listaVar (buscarArbOrig (tokens!!0) estado)) [convAInt(tokens!!1), convAInt(tokens!!2)])) )
---show (evalArb (trdEstado(snd (buscar (head tokens) estado))) (enlazarValores (listaVar (trdEstado(snd (buscar (head tokens) estado)))) [1, 2]))
+    | length(buscarLstOrig (head tokens) estado) /= length(tail tokens) = (False, estado, "Error, cantidad incorrecta de valores para la expresión!.")
+    | verifVarsInt(tail tokens) == False = (False, estado, "Error, las variables ingresadas deben ser números enteros!.")
+    | otherwise = (False, estado, show(evalArb(buscarArbOrig (tokens!!0) estado) (enlazarValores (listaVar (buscarArbOrig (tokens!!0) estado)) (convVars(tail tokens)))) )
 
---obtVar_cvo :: [String] -> Estado -> [String]
-obtCantVars :: [String] -> Estado -> Int
-obtCantVars [] _ = 0
+convVars :: [String] -> [Int]
+convVars [] = init [0] --no incluir el [0]
+convVars (x:xs) = (convAInt(x) : convVars(xs)) --ya se verifica que sean Int
+
+verifVarsInt :: [String] -> Bool -- Verificar que todos sean int (cvo)
+verifVarsInt [] = True
+verifVarsInt (x:xs) 
+    | esInt(x) == False = False
+    | otherwise = verifVarsInt xs 
 
 --Mostrar-parámetros (mp):
 
