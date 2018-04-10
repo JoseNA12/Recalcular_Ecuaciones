@@ -34,19 +34,6 @@ nHojas (Hoja _) = 1
 nHojas (Nodo x i d) = nHojas i + nHojas d
 
 
-delete :: Int -> Arbol -> Arbol
-delete k Hoja = Hoja
-delete k x@(Nodo a l r)
-  | (k < a) = delete k l
-  | (k > a) = delete k r
-  | (k == a) = delete' k x
-
-delete' :: Int -> Arbol -> Arbol
-delete' k (Nodo a l r)
-  | (l == Hoja)  = r
-  | (r == Hoja)  = l
-  | otherwise = let (k,t) = maxAndDelete l
-                in Nodo k t r
 
 
 {--4.	Elabore una función listaVar que tome un Arbol y devuelva una lista con las 

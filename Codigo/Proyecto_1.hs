@@ -76,8 +76,9 @@ procesar comando estado =
      case tokens!!0 of
           "ie" -> ie (tail tokens) estado
           --"borrar" -> cmd_borrar (tail tokens) estado
-          "imp" -> cmd_imp estado
+          --"imp" -> cmd_imp estado
           "mv" -> cmd_mv (tail tokens) estado
+          "ma" -> cmd_ma (tail tokens) estado
           -- comando fin: retornar tripleta que finaliza ciclo          
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
@@ -102,11 +103,12 @@ cmd_borrar (v:_) estado = let (res, nuevoestado) = borrar v estado
 
 -- función que busca un nombre en el estado
 -- 
-buscar :: String -> Estado -> Bool
-buscar _ [] = False
-buscar v1 ((v2 ,[y], q, [w], p):estado) = if v1 == v2
-                                         then True
+buscar :: String -> Estado -> (Bool, Estado)
+buscar _ []  = (False, [("", [""], (Nodo "" (Hoja "") (Hoja "")), [""], (Nodo "" (Hoja "") (Hoja "")))])
+buscar v1 ((v2, y, q, w, p):estado) = if v1 == v2
+                                         then (True, [(v2 ,y, q, w, p)])
                                          else buscar v1 estado
+
 
 -- función que elimina un par del estado
 -- 
@@ -143,7 +145,7 @@ ie tokens estado
     | (valid_1_ie (tokens!!0) (drop 2 tokens)) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' se encuentra en la expresión!.")
     | (valid_2_ie (tokens!!0) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' ya se encuentra definida!.")
     | (valid_3_ie (tokens) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' produce un ciclo!.")
-    | otherwise = (False, nuevoestado, show (mv (tokens!!0) nuevoestado))
+    | otherwise = (False, nuevoestado, (formatEst [(last nuevoestado)]))
        where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(crearArbol(drop 2 tokens)), (Nodo "*" (Hoja "Vacio") (Hoja "Vacio")))] --Variable, Lista variables, Arbol
              --mensaje = "Se definió " ++ tokens!!0
 
@@ -174,10 +176,10 @@ valid_2_ie var estado
 --no aparece a la derecha de una ecuación anterior y que la variable de esa ecuación anterior no 
 --aparece a la derecha de la nueva ecuación
 valid_3_ie :: [String] -> Estado -> Bool -- (x = 2 - y), (y = x * 6)
-valid_3_ie var estado
+valid_3_ie tokens estado
     | length(estado) <= 0 = False
-    | ((var!!0) `elem` (frhEstado (head estado))) && ((fstEstado (head estado)) `elem` (drop 2 var)) = True
-    | otherwise = valid_3_ie var (tail estado)
+    | ((tokens!!0) `elem` (frhEstado (head estado))) && ((fstEstado (head estado)) `elem` (drop 2 tokens)) = True
+    | otherwise = valid_3_ie tokens (tail estado)
 
 
 fstEstado :: (var, lista1, arbol1, lista2, arbol2) -> var
@@ -197,18 +199,19 @@ fveEstado (_, _, _, _, x) = x
 
 
 --Mostrar-variable (mv):
-mv :: String -> Estado -> (String, [String], String, [String], String)
-mv var estado 
-    | var == (fstEstado (head estado)) = (fstEstado (head estado), scdEstado (head estado), quitarParent(mostArbol(trdEstado (head estado))), frhEstado (head estado), quitarParent(mostArbol(fveEstado (head estado))))
-
 cmd_mv :: [String] -> Estado -> (Bool, Estado, String)
-cmd_mv var estado
-    | length(var) <= 0 = (False, estado, "Error, ingrese la incognita!.")
-    | length(var) /= 1 = (False, estado, "Error, debe ingresar solo una incognita!.")
-    | (buscar (head var) estado) == True = (False, estado, (show (mv (head var) estado)))
-    | otherwise = (False, estado, "La incognita no existe!.")
+cmd_mv tokens estado
+    | length(tokens) <= 0 = (False, estado, "Error, ingrese la incognita!.")
+    | length(tokens) /= 1 = (False, estado, "Error, debe ingresar solo una incognita!.")
+    | (fst (buscar (head tokens) estado)) == True = (False, estado, (formatEst(snd (buscar (head tokens) estado)))) --snd (_, estado), head [()] -> ()
+    | otherwise = (False, estado, "Error, la incognita no se encuentra definida!.") --"La incognita no existe!.")
 
 --Mostrar-ambiente (ma):
+cmd_ma :: [String] -> Estado -> (Bool, Estado, String)
+cmd_ma tokens estado 
+    | length(tokens) /= 0 = (False, estado, "Error, esta funcionalidad no recibe ningún parámetro!.")
+    | otherwise = (False, estado, (iterar estado))
+
 
 --Calcular-variable (cv):
 
@@ -223,11 +226,22 @@ cmd_mv var estado
 --MostrarArbol (mostArbol)
 mostArbol :: Arbol -> String
 mostArbol (Hoja valor) = valor
-mostArbol (Nodo x i d) = "(" ++ (mostArbol i) ++ x  ++ (mostArbol d) ++ ")"
+mostArbol (Nodo x i d) = "(" ++ (mostArbol i) ++ " " ++ x ++ " " ++ (mostArbol d) ++ ")"
 
 quitarParent :: String -> String --"( (3 + (x + 2)) * 2 )"
 quitarParent ecuacion = reverse (drop 1 (reverse (drop 1 ecuacion)))
 
+iterar :: Estado -> String
+iterar [] = ""
+iterar ((v2, y, q, w, p):estado) = "\n" ++ (formatEst [(v2, y, q, w, p)]) ++ iterar estado --(show (v2, y, q, w, p))
+
+formatEst :: Estado -> String --Solo puede mostrar el primer estado en la tupla
+formatEst [] = ""
+formatEst estado = "{ " ++ fstEstado(head estado) ++ ", " 
+                        ++ (show (scdEstado(head estado))) ++ ", " 
+                        ++ quitarParent(mostArbol(trdEstado(head estado))) ++ ", " 
+                        ++ (show(frhEstado(head estado))) ++ ", "
+                        ++ quitarParent(mostArbol(fveEstado(head estado))) ++ " }"
 
 {--2. Elabore una función crearArbol que tome una tira de caracteres con una 
 operación binaria simple ("operando  operación  operando") y devuelva un árbol 
