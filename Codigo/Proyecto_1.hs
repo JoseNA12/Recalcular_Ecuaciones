@@ -79,6 +79,7 @@ procesar comando estado =
           --"imp" -> cmd_imp estado
           "mv" -> cmd_mv (tail tokens) estado
           "ma" -> cmd_ma (tail tokens) estado
+          "cvo" -> cmd_cvo (tail tokens) estado
           -- comando fin: retornar tripleta que finaliza ciclo          
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
@@ -108,7 +109,30 @@ buscar _ []  = (False, [("", [""], (Nodo "" (Hoja "") (Hoja "")), [""], (Nodo ""
 buscar v1 ((v2, y, q, w, p):estado) = if v1 == v2
                                          then (True, [(v2 ,y, q, w, p)])
                                          else buscar v1 estado
+--Buscar primero con la funcion de arriba, y luego obtener los datos especificos
+buscarLstOrig :: String -> Estado -> [String]
+buscarLstOrig _ []  = [""]
+buscarLstOrig v1 ((v2, y, q, w, p):estado) = if v1 == v2
+                                         then y
+                                         else buscarLstOrig v1 estado
 
+buscarArbOrig :: String -> Estado -> Arbol
+buscarArbOrig _ []  = (Nodo "" (Hoja "") (Hoja ""))
+buscarArbOrig v1 ((v2, y, q, w, p):estado) = if v1 == v2
+                                         then q
+                                         else buscarArbOrig v1 estado
+
+buscarLstVig :: String -> Estado -> [String]
+buscarLstVig _ []  = [""]
+buscarLstVig v1 ((v2, y, q, w, p):estado) = if v1 == v2
+                                         then w
+                                         else buscarLstVig v1 estado
+
+buscarArbVig :: String -> Estado -> Arbol
+buscarArbVig _ []  = (Nodo "" (Hoja "") (Hoja ""))
+buscarArbVig v1 ((v2, y, q, w, p):estado) = if v1 == v2
+                                         then p
+                                         else buscarArbVig v1 estado
 
 -- función que elimina un par del estado
 -- 
@@ -212,10 +236,22 @@ cmd_ma tokens estado
     | length(tokens) /= 0 = (False, estado, "Error, esta funcionalidad no recibe ningún parámetro!.")
     | otherwise = (False, estado, (iterar estado))
 
-
 --Calcular-variable (cv):
 
 --Calcular-variable-original (cvo):
+cmd_cvo :: [String] -> Estado -> (Bool, Estado, String)
+cmd_cvo tokens estado 
+    | length(tokens) /= 3 = (False, estado, "Error, se debe ingresar una incognita con dos variables enteras!.")
+    | esInt(head tokens) == True = (False, estado, "Error, se debe ingresar una incognita válida!.")
+    | (fst (buscar (head tokens) estado)) == False = (False, estado, "Error, la incognita ingresada aún no se registrado!.")
+    
+    | (esInt(tokens!!1) && esInt(tokens!!2)) /= True = (False, estado, "Error, las variables ingresadas deben ser números enteros!.")
+    | otherwise = (False, estado, show(evalArb(buscarArbOrig (tokens!!0) estado) (enlazarValores (listaVar (buscarArbOrig (tokens!!0) estado)) [convAInt(tokens!!1), convAInt(tokens!!2)])) )
+--show (evalArb (trdEstado(snd (buscar (head tokens) estado))) (enlazarValores (listaVar (trdEstado(snd (buscar (head tokens) estado)))) [1, 2]))
+
+--obtVar_cvo :: [String] -> Estado -> [String]
+obtCantVars :: [String] -> Estado -> Int
+obtCantVars [] _ = 0
 
 --Mostrar-parámetros (mp):
 
