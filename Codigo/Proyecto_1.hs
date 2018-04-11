@@ -80,6 +80,7 @@ procesar comando estado =
           "mv" -> cmd_mv (tail tokens) estado
           "ma" -> cmd_ma (tail tokens) estado
           "cvo" -> cmd_cvo (tail tokens) estado
+          "mp" -> cmd_mp (tail tokens) estado
           -- comando fin: retornar tripleta que finaliza ciclo          
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
@@ -259,6 +260,9 @@ verifVarsInt (x:xs)
     | otherwise = verifVarsInt xs 
 
 --Mostrar-parámetros (mp):
+cmd_mp :: [String] -> Estado -> (Bool, Estado, String)
+cmd_mp tokens estado
+    | length(tokens) /= 0 = (False, estado, "Error, esta funcionalidad no recibe ningún parámetro!.")
 
 --Evaluar-todo (et):
 
