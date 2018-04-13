@@ -26,7 +26,7 @@
 type Estado = [(String, [String], Arbol, [String], Arbol)]
 
 type Ecuacion = Int -> Int -> Int
-data Termino = Variable String | Entero Int --deriving (Show)
+data Termino = Variable String | Entero Int deriving (Eq)
 data Arbol = Hoja Termino | Nodo Ecuacion Arbol Arbol --deriving (Show)
 
 
@@ -315,18 +315,24 @@ obtOperacionStr op
     | ((op) 2 1) == 1 = "-" 
     | ((op) 2 1) == 2 = "*"
 
-{--
+
 {--3. Elabore una función sustVar que tome una variable y un Arbol que representa 
 su ecuación y sustituya en otro Arbol las apariciones de esa variable por copias del 
 Arbol asociado.:--}
 
---sustVar "b" (Nodo "+" (Hoja "a") (Hoja "2")) (Nodo "*" (Hoja "b") (Hoja "p"))
+--sustVar "b" (Nodo (+) (Hoja (Variable "a")) (Hoja (Entero 2))) (Nodo (*) (Hoja (Variable "b")) (Hoja (Variable "p")))
 
 --          var    ecuación   a mod    a mod
 sustVar :: String -> Arbol -> Arbol  -> Arbol --[String]
-sustVar variable (Hoja valor_1) (Hoja valor_2) = (Hoja valor_2)
-sustVar variable (Nodo raiz_1 izq_1 der_1) (Nodo raiz_2 izq_2 der_2) = sustVar valor_2 (Nodo raiz_1 izq_1 der_1) (Nodo)
+sustVar var (Hoja valor_1) (Hoja valor_2) = if ((Variable var) == valor_2)
+                                            then (Hoja valor_1)
+                                            else (Hoja valor_2)
+sustVar var (Nodo x1 i1 d1) (Nodo x2 i2 d2) = sustVar var (Nodo x1 i1 d1) i2
 
+prueba3 :: Arbol -> String
+prueba3 arbol = (formatEst [("var", ["a", "b"], arbol, ["a", "b"], arbol)])
+
+{--
 nHojas :: Arbol -> Int
 nHojas (Hoja _) = 1
 nHojas (Nodo x i d) = nHojas i + nHojas d
