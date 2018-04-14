@@ -26,9 +26,11 @@
 type Estado = [(String, [String], Arbol, [String], Arbol)]
 
 type Ecuacion = Int -> Int -> Int
-data Termino = Variable String | Entero Int deriving (Eq)
-data Arbol = Hoja Termino | Nodo Ecuacion Arbol Arbol --deriving (Show)
+data Termino = Variable String | Entero Int deriving (Show, Eq)
+data Arbol = Hoja Termino | Nodo Ecuacion Arbol Arbol deriving (Show)
 
+instance Show (a-> b) where
+  show f = "jeje"
 
 main :: IO ()
 main = do 
@@ -76,14 +78,16 @@ procesar comando estado =
      -- función que implementa dicho comando
      case tokens!!0 of
           "ie" -> ie (tail tokens) estado
-          --"borrar" -> cmd_borrar (tail tokens) estado
           "mv" -> cmd_mv (tail tokens) estado
           "ma" -> cmd_ma (tail tokens) estado
           --"cv" ->
           "cvo" -> cmd_cvo (tail tokens) estado
           --"mp" ->
           --"et" ->
-          -- comando fin: retornar tripleta que finaliza ciclo
+          "info" -> (False, estado, "\n- Comandos: \n ie: Insertar ecuación. (ie x = y * z) \n mv: Mostrar variable. (mv x) \n " ++
+                    "ma: Mostrar ambiente. (ma) \n cv: Calcular variable. (cv x 5 3 ...) \n cvo: Calcular variable original. (cv x 5 3) \n " ++
+                    "mp: Mostrar parámetros. (mp) \n et: Evaluar todo. (et 5 3 4 ...) \n fin: Finalizar ejecución del programa. (fin)\n")
+          
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
        where tokens = words comando --["x","=","2","+","3"]
@@ -183,6 +187,7 @@ valid_Fort_ie tokens
     | length(tokens) == 0 = True
     | length(tokens) /= 5 = True
     | esInt(head tokens) = True
+    | (tokens!!1 /= "=") = True
     | (tokens!!3 /= "+") && (tokens!!3 /= "-") && (tokens!!3 /= "*") = True
     | otherwise = False
 
@@ -209,6 +214,8 @@ valid_3_ie tokens estado
     | ((tokens!!0) `elem` (frhEstado (head estado))) && ((fstEstado (head estado)) `elem` (drop 2 tokens)) = True
     | otherwise = valid_3_ie tokens (tail estado)
 
+
+cmd_sustiEstruc :: [String] -> Estado -> 
 
 fstEstado :: (var, lista1, arbol1, lista2, arbol2) -> var
 fstEstado (x, _, _, _, _) = x
@@ -270,10 +277,10 @@ verifVarsInt (x:xs)
 
 --MostrarArbol (mostArbol)
 mostArbol :: Arbol -> String
-mostArbol (Hoja valor) = (obtValorTipo(valor))
+mostArbol (Hoja valor) = (obtValorHoja(valor))
 mostArbol (Nodo x i d) = "(" ++ (mostArbol i) ++ " " ++ obtOperacionStr(x) ++ " " ++ (mostArbol d) ++ ")"
 
-quitarParent :: String -> String --"( (3 + (x + 2)) * 2 )"
+quitarParent :: String -> String --"( (3 + (x + 2)) * 2 )" Quitar los parentesis cuando se muestra una ecuación
 quitarParent ecuacion = reverse (drop 1 (reverse (drop 1 ecuacion)))
 
 iterar :: Estado -> String
@@ -298,18 +305,18 @@ crearArbol ec = if length (ec) == 1
     then Hoja (defHoja (head ec)) --["a"] -> "a"
     else Nodo (obtOperacionEc(ec!!1)) (crearArbol [head ec]) (crearArbol [last ec])
 
-defHoja :: String -> Termino
+defHoja :: String -> Termino --Determinar el tipo de hoja según la ingresado
 defHoja var = if esInt(var)
               then Entero (convAInt(var))
               else Variable var 
 
-obtOperacionEc :: String -> Ecuacion
+obtOperacionEc :: String -> Ecuacion --Obtener la operación aritmetica como tal
 obtOperacionEc op = case op of 
              "+" ->  (+)
              "-" ->  (-)
              "*" ->  (*)
 
-obtOperacionStr :: Ecuacion -> String
+obtOperacionStr :: Ecuacion -> String --Saber la operacion que contiene una ecuacion
 obtOperacionStr op 
     | ((op) 2 1) == 3 = "+"
     | ((op) 2 1) == 1 = "-" 
@@ -324,13 +331,14 @@ Arbol asociado.:--}
 
 --          var    ecuación   a mod    a mod
 sustVar :: String -> Arbol -> Arbol  -> Arbol --[String]
-sustVar var (Hoja valor_1) (Hoja valor_2) = if ((Variable var) == valor_2)
-                                            then (Hoja valor_1)
+sustVar var arbolOrig (Hoja valor_2) = if (obtValorHoja(valor_2)) == var
+                                            then arbolOrig
                                             else (Hoja valor_2)
-sustVar var (Nodo x1 i1 d1) (Nodo x2 i2 d2) = sustVar var (Nodo x1 i1 d1) i2
+sustVar var arbolOrig (Nodo op izq der) = (Nodo op (sustVar var arbolOrig izq) (sustVar var arbolOrig der))
 
-prueba3 :: Arbol -> String
-prueba3 arbol = (formatEst [("var", ["a", "b"], arbol, ["a", "b"], arbol)])
+obtValorHoja :: Termino -> String --Obtener el valor de la hoja, ya sea Variable o Entero
+obtValorHoja (Variable valor) = valor
+obtValorHoja (Entero valor) = show(valor)
 
 {--
 nHojas :: Arbol -> Int
@@ -346,8 +354,8 @@ la lista:--}
 --Árbol para (a+(2+c))*z> produce ["a","c","z"]
 
 listaVar :: Arbol -> [String]
-listaVar (Hoja valor) = if esInt(obtValorTipo(valor)) == False
-                        then [obtValorTipo(valor)]
+listaVar (Hoja valor) = if esInt(obtValorHoja(valor)) == False
+                        then [obtValorHoja(valor)]
                         else [""]
 listaVar (Nodo raiz izq der) = quitarRep(quitarEsp(valores))
        where valores = listaVar izq ++ listaVar der
@@ -356,18 +364,14 @@ esInt var = case reads var :: [(Integer, String)] of
   [(_, "")] -> True
   _         -> False
 
-quitarEsp :: [String] -> [String]
+quitarEsp :: [String] -> [String] --Quitar espacios de la lista
 quitarEsp [] = []
 quitarEsp lista = [x | x <- lista, x `notElem` [""]]
 
-quitarRep :: [String] -> [String]
+quitarRep :: [String] -> [String] --Quitar elementos repetidos
 quitarRep [] = []
 quitarRep [x] = [x]
 quitarRep (x:xs) = x : [k  | k <- quitarRep (xs), k /= x]
-
-obtValorTipo :: Termino -> String
-obtValorTipo (Variable var) = (var)
-obtValorTipo (Entero var) = show(var) --int
 
 --quitarRep(quitarEsp(listaVar()))
 
@@ -385,16 +389,16 @@ de listaVar para ese Arbol:--}
 --evalArb Arbol (enlazarValores (listaVar Arbol) [1, 2, 3])
 
 evalArb :: Arbol -> [(String, Int)] -> Int
-evalArb (Hoja valor) tupla = if esInt(obtValorTipo(valor)) == False --si es variable/incognita
-                                    then (obtenerValor (obtValorTipo(valor)) tupla) --devuelva el valor asosiado de la tupla: "b" [("a", 1), ("b", 2)]
-                                    else (convAInt (obtValorTipo(valor))) --si es numero dejelo asi y conviertalo en Int
+evalArb (Hoja valor) tupla = if esInt(obtValorHoja(valor)) == False --si es variable/incognita
+                                    then (obtenerValor (obtValorHoja(valor)) tupla) --devuelva el valor asosiado de la tupla: "b" [("a", 1), ("b", 2)]
+                                    else (convAInt (obtValorHoja(valor))) --si es numero dejelo asi y conviertalo en Int
 evalArb (Nodo operador izq der) tupla
    |obtOperacionStr(operador) == "+" = (operador) (evalArb izq tupla) (evalArb der tupla)
    |obtOperacionStr(operador) == "-" = (operador) (evalArb izq tupla) (evalArb der tupla)
    |obtOperacionStr(operador) == "*" = (operador) (evalArb izq tupla) (evalArb der tupla)
 
 
-convAInt :: String -> Int
+convAInt :: String -> Int --Convertir de String a Int
 convAInt "" = 0
 convAInt caracter = read (caracter) :: Int
 
@@ -405,6 +409,6 @@ enlazarValores (x:xs) (y:ys)
     |length (x:xs) == length (y:ys) = [(x, y)] ++ (enlazarValores xs ys)
     |otherwise = [("error", 0)]
 
-obtenerValor :: String -> [(String, Int)] -> Int
+obtenerValor :: String -> [(String, Int)] -> Int --Obtener el segundo valor de una tupla dado el primer elemento
 obtenerValor var tupla = head [y | (x, y) <- tupla, x == var] -- obtenerValor "a" [("b", 5), ("a", 2)]
 
