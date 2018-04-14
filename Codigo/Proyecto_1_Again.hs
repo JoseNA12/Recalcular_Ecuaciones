@@ -177,9 +177,9 @@ ie tokens estado
     | (valid_1_ie (tokens!!0) (drop 2 tokens)) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' se encuentra en la expresión!.")
     | (valid_2_ie (tokens!!0) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' ya se encuentra definida!.")
     | (valid_3_ie (tokens) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' produce un ciclo!.")
-    | otherwise = (False, nuevoestado, (formatEst [(last nuevoestado)]))
-       where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(crearArbol(drop 2 tokens)), (Nodo (+) (Hoja (Variable "")) (Hoja (Variable ""))))] --Variable, Lista variables, Arbol
-             --mensaje = "Se definió " ++ tokens!!0
+    | otherwise = (False, nuevoestado, mensaje)
+       where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(cmd_sustiEstruc(listaVar(crearArbol(drop 2 tokens))) estado (crearArbol(drop 2 tokens))), cmd_sustiEstruc(listaVar(crearArbol(drop 2 tokens))) estado (crearArbol(drop 2 tokens)) )]
+             mensaje = formatEst [(last nuevoestado)]
 
 --Rechazar la ecuación si tiene errores sintácticos en ecuación 
 valid_Fort_ie :: [String] -> Bool
@@ -214,8 +214,12 @@ valid_3_ie tokens estado
     | ((tokens!!0) `elem` (frhEstado (head estado))) && ((fstEstado (head estado)) `elem` (drop 2 tokens)) = True
     | otherwise = valid_3_ie tokens (tail estado)
 
+cmd_sustiEstruc :: [String] -> Estado -> Arbol -> Arbol
+cmd_sustiEstruc valores estado arbolInsert
+    | length(valores) <= 0 = arbolInsert
+    | fst (buscar(head valores) estado) == True = cmd_sustiEstruc (tail valores) estado (sustVar (head valores) (buscarArbVig (head valores) estado) arbolInsert)
+    | otherwise = cmd_sustiEstruc (tail valores) estado arbolInsert
 
-cmd_sustiEstruc :: [String] -> Estado -> 
 
 fstEstado :: (var, lista1, arbol1, lista2, arbol2) -> var
 fstEstado (x, _, _, _, _) = x
