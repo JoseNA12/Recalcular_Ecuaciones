@@ -44,7 +44,7 @@ mainloop estado = do
     -- putStr::String -> IO (), es una función que recibe una tira y 
     -- devuelve una acción, la cual al ser ejecutada imprime la tira 
     -- (efecto colateral) y retorna nada
-    putStr ">> "
+    putStr "\n>> "
     
     -- getLine es una función que retorna una acción que al ser ejecutada
     -- retorna una tira; la construcción "<-" ejecuta la acción de getLine
@@ -80,7 +80,7 @@ procesar comando estado =
           "ie" -> ie (tail tokens) estado
           "mv" -> cmd_mv (tail tokens) estado
           "ma" -> cmd_ma (tail tokens) estado
-          --"cv" ->
+          "cv" -> cmd_cv (tail tokens) estado
           "cvo" -> cmd_cvo (tail tokens) estado
           --"mp" ->
           --"et" ->
@@ -177,8 +177,8 @@ ie tokens estado
     | (valid_1_ie (tokens!!0) (drop 2 tokens)) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' se encuentra en la expresión!.")
     | (valid_2_ie (tokens!!0) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' ya se encuentra definida!.")
     | (valid_3_ie (tokens) estado) == True = (False, estado, "Error, la incógnita '" ++ tokens!!0 ++ "' produce un ciclo!.")
-    | otherwise = (False, nuevoestado, mensaje)
-       where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(cmd_sustiEstruc(listaVar(crearArbol(drop 2 tokens))) estado (crearArbol(drop 2 tokens))), cmd_sustiEstruc(listaVar(crearArbol(drop 2 tokens))) estado (crearArbol(drop 2 tokens)) )]
+    | otherwise = (False, (actEstado (init nuevoestado) [(last nuevoestado)]), mensaje)
+       where nuevoestado = estado ++ [(tokens!!0, listaVar(crearArbol(drop 2 tokens)), crearArbol(drop 2 tokens), listaVar(actEcInsert(listaVar(crearArbol(drop 2 tokens))) estado (crearArbol(drop 2 tokens))), actEcInsert(listaVar(crearArbol(drop 2 tokens))) estado (crearArbol(drop 2 tokens)) )]
              mensaje = formatEst [(last nuevoestado)]
 
 --Rechazar la ecuación si tiene errores sintácticos en ecuación 
@@ -214,12 +214,21 @@ valid_3_ie tokens estado
     | ((tokens!!0) `elem` (frhEstado (head estado))) && ((fstEstado (head estado)) `elem` (drop 2 tokens)) = True
     | otherwise = valid_3_ie tokens (tail estado)
 
-cmd_sustiEstruc :: [String] -> Estado -> Arbol -> Arbol
-cmd_sustiEstruc valores estado arbolInsert
+--variables de la ecuacion insertada -> estado -> arbol original de la ecuacion insertada
+actEcInsert :: [String] -> Estado -> Arbol -> Arbol --Actualizar el arbol de la ecuacion insertada de acuerdo a las ecuaciones existentes
+actEcInsert valores estado arbolInsert
     | length(valores) <= 0 = arbolInsert
-    | fst (buscar(head valores) estado) == True = cmd_sustiEstruc (tail valores) estado (sustVar (head valores) (buscarArbVig (head valores) estado) arbolInsert)
-    | otherwise = cmd_sustiEstruc (tail valores) estado arbolInsert
+    | fst (buscar(head valores) estado) == True = actEcInsert (tail valores) estado (sustVar (head valores) (buscarArbVig (head valores) estado) arbolInsert)
+    | otherwise = actEcInsert (tail valores) estado arbolInsert
 
+--Actualizar los estados anteriores si se define una ecuacion que contiene incognitas en esos estados
+actEstado :: Estado -> Estado -> Estado --estado sin la ecuación insertada -> solo el estado de la ecuación insertada
+actEstado [] estadoInsert = estadoInsert
+actEstado ((v2, y, q, w, p):estadoSinInsert) estadoInsert = if fstEstado(head estadoInsert) `elem` w
+                                         then [(v2, y, q, listaVar(actEcInsert w estadoInsert p), (actEcInsert w estadoInsert p))] ++ actEstado estadoSinInsert estadoInsert
+                                         else [(v2, y, q, w, p)] ++ actEstado estadoSinInsert estadoInsert
+
+--actEstado ([("x", ["q", "w"], (Nodo (+) (Hoja (Variable "q")) (Hoja (Variable "w"))), ["q", "w"], (Nodo (+) (Hoja (Variable "q")) (Hoja (Variable "w")))), ("y", ["e"], (Nodo (+) (Hoja (Variable "e")) (Hoja (Entero 2))), ["e"], (Nodo (+) (Hoja (Variable "e")) (Hoja (Entero 2))))]) ([("q", ["k"], (Nodo (+) (Hoja (Variable "k")) (Hoja (Entero 12))), ["k"], (Nodo (+) (Hoja (Variable "k")) (Hoja (Entero 12))))])
 
 fstEstado :: (var, lista1, arbol1, lista2, arbol2) -> var
 fstEstado (x, _, _, _, _) = x
@@ -252,6 +261,14 @@ cmd_ma tokens estado
     | otherwise = (False, estado, (iterar estado))
 
 --Calcular-variable (cv):
+cmd_cv :: [String] -> Estado -> (Bool, Estado, String)
+cmd_cv tokens estado 
+    | length(tokens) <= 0 = (False, estado, "Error, ingrese una expresión a evaluar!.")
+    | esInt(head tokens) == True = (False, estado, "Error, se debe ingresar una incognita válida!.")
+    | (fst (buscar (head tokens) estado)) == False = (False, estado, "Error, la incognita ingresada aún no se registrado!.")
+    | length(buscarLstVig (head tokens) estado) /= length(tail tokens) = (False, estado, "Error, cantidad incorrecta de valores para la expresión!.")
+    | verifVarsInt(tail tokens) == False = (False, estado, "Error, las variables ingresadas deben ser números enteros!.")
+    | otherwise = (False, estado, show(evalArb(buscarArbVig (tokens!!0) estado) (enlazarValores (listaVar (buscarArbVig (tokens!!0) estado)) (convVars(tail tokens)))) )
 
 --Calcular-variable-original (cvo):
 cmd_cvo :: [String] -> Estado -> (Bool, Estado, String)
