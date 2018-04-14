@@ -82,31 +82,15 @@ procesar comando estado =
           "ma" -> cmd_ma (tail tokens) estado
           "cv" -> cmd_cv (tail tokens) estado
           "cvo" -> cmd_cvo (tail tokens) estado
-          --"mp" ->
+          "mp" -> cmd_mp (tail tokens) estado
           --"et" ->
           "info" -> (False, estado, "\n- Comandos: \n ie: Insertar ecuación. (ie x = y * z) \n mv: Mostrar variable. (mv x) \n " ++
                     "ma: Mostrar ambiente. (ma) \n cv: Calcular variable. (cv x 5 3 ...) \n cvo: Calcular variable original. (cv x 5 3) \n " ++
-                    "mp: Mostrar parámetros. (mp) \n et: Evaluar todo. (et 5 3 4 ...) \n fin: Finalizar ejecución del programa. (fin)\n")
+                    "mp: Mostrar parámetros. (mp) \n et: Evaluar todo. (et 5 3 4 ...) \n fin: Finalizar ejecución del programa. (fin)")
           
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
        where tokens = words comando --["x","=","2","+","3"]
---}
--- función que implementa el comando def
---   crea nuevo estado agregando un nuevo par
-{--cmd_def::[String] -> Estado -> (Bool, Estado, String)
-cmd_def tokens estado = (False, nuevoestado, mensaje)
-       where nuevoestado = estado ++ [(tokens!!0,tokens!!1)]
-             mensaje = "Definido " ++ tokens!!0--}
-
--- función que implementa el comando borrar
---   
-{--cmd_borrar::[String] -> Estado -> (Bool, Estado, String)
-cmd_borrar [] estado = (False, estado, "No se especificó qué borrar")
-cmd_borrar (v:_) estado = let (res, nuevoestado) = borrar v estado
-                             in if res
-                                  then (False, nuevoestado, v ++ " borrado")
-                                  else (False, estado, v ++ " no estaba definido")--}
 
 
 -- función que busca un nombre en el estado
@@ -141,35 +125,14 @@ buscarArbVig _ []  = (Nodo (+) (Hoja (Variable "")) (Hoja (Variable "")))
 buscarArbVig v1 ((v2, y, q, w, p):estado) = if v1 == v2
                                          then p
                                          else buscarArbVig v1 estado
-{--   
--- función que elimina un par del estado
--- 
-{--borrar :: String -> Estado -> (Bool, Estado)
-borrar _ [] = (False, [])
-borrar v1 ((v2,y):estado) = let (res,nuevoestado) = borrar v1 estado
-                                 in if v1 == v2
-                                      then (True,estado)
-                                      else  (res, (v2,y):nuevoestado)--}
 
-
---}
 -- función que maneja un comando desconocido
 --
 cmd_desconocido :: String -> String -> Estado -> (Bool, Estado, String)
 cmd_desconocido cmd comando estado = (False, estado, mensaje)
        where mensaje = "Comando desconocido ("++ cmd ++"): '" ++ comando ++ "'"
-{--
--- función que implementa el comando imp
---
-cmd_imp :: Estado -> (Bool, Estado, String)
-cmd_imp estado = (False, estado, show estado)
 
 
-
-
-
-
---}
 --Insertar ecuacion (ie)
 ie :: [String] -> Estado -> (Bool, Estado, String)
 ie tokens estado 
@@ -281,7 +244,7 @@ cmd_cvo tokens estado
     | otherwise = (False, estado, show(evalArb(buscarArbOrig (tokens!!0) estado) (enlazarValores (listaVar (buscarArbOrig (tokens!!0) estado)) (convVars(tail tokens)))) )
 
 convVars :: [String] -> [Int]
-convVars [] = init [0] --no incluir el [0]
+convVars [] = [] --init [0] --no incluir el [0]
 convVars (x:xs) = (convAInt(x) : convVars(xs)) --ya se verifica que sean Int
 
 verifVarsInt :: [String] -> Bool -- Verificar que todos sean int (cvo)
@@ -291,8 +254,21 @@ verifVarsInt (x:xs)
     | otherwise = verifVarsInt xs 
 
 --Mostrar-parámetros (mp):
+cmd_mp :: [String] -> Estado -> (Bool, Estado, String)
+cmd_mp tokens estado 
+    | length(tokens) /= 0 = (False, estado, "Error, esta funcionalidad no recibe ningún parámetro!.") 
+    | otherwise = (False, estado, fortMp(mp estado))
+
+mp :: Estado -> [String]
+mp [] = []
+mp ((v2, y, q, w, p ):estado) = quitarRep (w ++ (mp estado))
+
+fortMp :: [String] -> String
+fortMp [] = ""
+fortMp (x:xs) = x ++ " " ++ (fortMp xs)
 
 --Evaluar-todo (et):
+
 
 --Terminar (fin)
 
@@ -377,8 +353,8 @@ la lista:--}
 listaVar :: Arbol -> [String]
 listaVar (Hoja valor) = if esInt(obtValorHoja(valor)) == False
                         then [obtValorHoja(valor)]
-                        else [""]
-listaVar (Nodo raiz izq der) = quitarRep(quitarEsp(valores))
+                        else []
+listaVar (Nodo raiz izq der) = quitarRep(valores)
        where valores = listaVar izq ++ listaVar der
 
 esInt var = case reads var :: [(Integer, String)] of
