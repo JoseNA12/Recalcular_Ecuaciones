@@ -26,11 +26,13 @@
 type Estado = [(String, [String], Arbol, [String], Arbol)]
 
 type Ecuacion = Int -> Int -> Int
-data Termino = Variable String | Entero Int deriving (Show, Eq)
-data Arbol = Hoja Termino | Nodo Ecuacion Arbol Arbol deriving (Show)
+data Termino = Variable String | Entero Int --deriving (Show, Eq)
+data Arbol = Hoja Termino | Nodo Ecuacion Arbol Arbol --deriving (Show)
 
+{--
 instance Show (a-> b) where
   show f = "jeje"
+--}
 
 main :: IO ()
 main = do 
@@ -83,7 +85,7 @@ procesar comando estado =
           "cv" -> cmd_cv (tail tokens) estado
           "cvo" -> cmd_cvo (tail tokens) estado
           "mp" -> cmd_mp (tail tokens) estado
-          --"et" ->
+          "et" -> cmd_et (tail tokens) estado
           "info" -> (False, estado, "\n- Comandos: \n ie: Insertar ecuación. (ie x = y * z) \n mv: Mostrar variable. (mv x) \n " ++
                     "ma: Mostrar ambiente. (ma) \n cv: Calcular variable. (cv x 5 3 ...) \n cvo: Calcular variable original. (cv x 5 3) \n " ++
                     "mp: Mostrar parámetros. (mp) \n et: Evaluar todo. (et 5 3 4 ...) \n fin: Finalizar ejecución del programa. (fin)")
@@ -220,6 +222,7 @@ cmd_mv tokens estado
 --Mostrar-ambiente (ma):
 cmd_ma :: [String] -> Estado -> (Bool, Estado, String)
 cmd_ma tokens estado 
+    | length(estado) <= 0 = (False, estado, "No hay ecuaciones almacenadas!.")
     | length(tokens) /= 0 = (False, estado, "Error, esta funcionalidad no recibe ningún parámetro!.")
     | otherwise = (False, estado, (iterar estado))
 
@@ -256,19 +259,30 @@ verifVarsInt (x:xs)
 --Mostrar-parámetros (mp):
 cmd_mp :: [String] -> Estado -> (Bool, Estado, String)
 cmd_mp tokens estado 
-    | length(tokens) /= 0 = (False, estado, "Error, esta funcionalidad no recibe ningún parámetro!.") 
+    | length(estado) <= 0 = (False, estado, "No hay ecuaciones almacenadas!.")
+    | length(tokens) /= 0 = (False, estado, "Error, esta funcionalidad no recibe ningún parámetro!." ++ (show tokens)) 
     | otherwise = (False, estado, fortMp(mp estado))
 
 mp :: Estado -> [String]
 mp [] = []
-mp ((v2, y, q, w, p ):estado) = quitarRep (w ++ (mp estado))
+mp ((v2, y, q, w, p):estado) = quitarRep(w ++ (mp estado))
 
 fortMp :: [String] -> String
 fortMp [] = ""
 fortMp (x:xs) = x ++ " " ++ (fortMp xs)
 
 --Evaluar-todo (et):
+cmd_et :: [String] -> Estado -> (Bool, Estado, String)
+cmd_et tokens estado
+    | length(estado) <= 0 = (False, estado, "No hay ecuaciones almacenadas!.")
+    | length(tokens) /= length(mp estado) = (False, estado, "Error, cantidad incorrecta de valores para la expresión!.")
+    | verifVarsInt(tokens) == False = (False, estado, "Error, las variables ingresadas deben ser números enteros!.")
+    | otherwise = (False, estado, mensaje)
+        where mensaje = "[ " ++ (et (convVars tokens) (mp estado) estado) ++ "]"
 
+et :: [Int] -> [String] -> Estado -> String
+et valores variables [] = ""
+et valores variables ((v2, y, q, w, p):estado) = "(" ++ v2 ++ ", " ++ (show (evalArb p (enlazarValores variables valores))) ++ ") " ++ (et valores variables estado) 
 
 --Terminar (fin)
 
