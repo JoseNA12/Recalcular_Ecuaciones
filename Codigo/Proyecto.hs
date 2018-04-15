@@ -404,9 +404,9 @@ evalArb (Hoja valor) tupla = if esInt(obtValorHoja(valor)) == False --si es vari
                                     then (obtenerValor (obtValorHoja(valor)) tupla) --devuelva el valor asosiado de la tupla: "b" [("a", 1), ("b", 2)]
                                     else (convAInt (obtValorHoja(valor))) --si es numero dejelo asi y conviertalo en Int
 evalArb (Nodo operador izq der) tupla
-   |obtOperacionStr(operador) == "+" = (operador) (evalArb izq tupla) (evalArb der tupla)
-   |obtOperacionStr(operador) == "-" = (operador) (evalArb izq tupla) (evalArb der tupla)
-   |obtOperacionStr(operador) == "*" = (operador) (evalArb izq tupla) (evalArb der tupla)
+   | obtOperacionStr(operador) == "+" = (operador) (evalArb izq tupla) (evalArb der tupla)
+   | obtOperacionStr(operador) == "-" = (operador) (evalArb izq tupla) (evalArb der tupla)
+   | obtOperacionStr(operador) == "*" = (operador) (evalArb izq tupla) (evalArb der tupla)
 
 
 convAInt :: String -> Int --Convertir de String a Int
@@ -416,9 +416,9 @@ convAInt caracter = read (caracter) :: Int
 
 enlazarValores :: [String] -> [Int] -> [(String, Int)] --enlazarValores ["a", "b", "c"] [1, 2, 3]
 enlazarValores (x:xs) (y:ys)
-    |length (xs) == 0 = [(x, y)]
-    |length (x:xs) == length (y:ys) = [(x, y)] ++ (enlazarValores xs ys)
-    |otherwise = [("error", 0)]
+    | length (xs) == 0 = [(x, y)]
+    | length (x:xs) == length (y:ys) = [(x, y)] ++ (enlazarValores xs ys)
+    | otherwise = [("error", 0)]
 
 obtenerValor :: String -> [(String, Int)] -> Int --Obtener el segundo valor de una tupla dado el primer elemento
 obtenerValor var tupla = head [y | (x, y) <- tupla, x == var] -- obtenerValor "a" [("b", 5), ("a", 2)]
