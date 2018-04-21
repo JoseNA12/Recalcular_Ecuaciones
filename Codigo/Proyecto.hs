@@ -92,7 +92,7 @@ procesar comando estado =
           
           "fin" -> (True, estado, "Saliendo...")
           _     -> cmd_desconocido (tokens!!0) comando estado
-       where tokens = words comando --["x","=","2","+","3"]
+       where tokens = words comando --["comando", x","=","2","+","3"]
 
 
 -- función que busca un nombre en el estado
@@ -310,6 +310,7 @@ formatEst estado = "{ " ++ fstEstado(head estado) ++ ", "
 {--2. Elabore una función crearArbol que tome una tira de caracteres con una 
 operación binaria simple ("operando  operación  operando") y devuelva un árbol 
 como del punto 1:--}
+-- 
 
 crearArbol :: [String] -> Arbol
 crearArbol ec = if length (ec) == 1 
@@ -367,7 +368,7 @@ la lista:--}
 listaVar :: Arbol -> [String]
 listaVar (Hoja valor) = if esInt(obtValorHoja(valor)) == False
                         then [obtValorHoja(valor)]
-                        else []
+                        else [] --entero
 listaVar (Nodo raiz izq der) = quitarRep(valores)
        where valores = listaVar izq ++ listaVar der
 
