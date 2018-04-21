@@ -26,12 +26,12 @@
 type Estado = [(String, [String], Arbol, [String], Arbol)]
 
 type Ecuacion = Int -> Int -> Int
-data Termino = Variable String | Entero Int --deriving (Show, Eq)
-data Arbol = Hoja Termino | Nodo Ecuacion Arbol Arbol --deriving (Show)
+data Termino = Variable String | Entero Int
+data Arbol = Hoja Termino | Nodo Ecuacion Arbol Arbol
 
 {--
 instance Show (a-> b) where
-  show f = "jeje"
+  show f = ""
 --}
 
 main :: IO ()
