@@ -1,27 +1,8 @@
 
--- Ejemplo de un ciclo interactivo en Haskell
-
--- El ciclo principal recibe un estado [(String,String)],
--- en cada iteración del ciclo principal, se lee una línea,
--- la cual se interpreta como si fuera un comando.
---    si empieza con "def"
---       generar un nuevo estado agregando al estado
---       anterior un nuevo par formado por la segunda y
---       tercera palabra del comando:
---       >> def a saludo
---    si empieza con "borrar"
---       eliminar del estado el primer par cuyo primer
---       componente sea igual a la segunda palabra del comando
---       >> borrar a
---    si empieza con "imp"
---       imprimir estado actual (print)
---       >> imp
---    si empieza con "fin"
---       terminar el ciclo
---       >> fin
 --
--- Luego de interpretar el comando, se invoca recursivamente 
--- el ciclo principal con el nuevo estado si es del caso.
+-- Proyecto 1 - Lenguajes de programación.
+-- José Navarro Acuña. - 2018.
+--
 
 type Estado = [(String, [String], Arbol, [String], Arbol)]
 
@@ -267,7 +248,7 @@ mp :: Estado -> [String]
 mp [] = []
 mp ((v2, y, q, w, p):estado) = quitarRep(w ++ (mp estado))
 
-fortMp :: [String] -> String
+fortMp :: [String] -> String --Mostrar las variables de una lista como string
 fortMp [] = ""
 fortMp (x:xs) = x ++ " " ++ (fortMp xs)
 
@@ -301,11 +282,15 @@ iterar ((v2, y, q, w, p):estado) = "\n" ++ (formatEst [(v2, y, q, w, p)]) ++ ite
 formatEst :: Estado -> String --Solo puede mostrar el primer estado en la tupla
 formatEst [] = ""
 formatEst estado = "{ " ++ fstEstado(head estado) ++ ", " 
-                        ++ (show (scdEstado(head estado))) ++ ", " 
+                        ++ "[" ++ (formatLista(scdEstado(head estado))) ++ ", " 
                         ++ quitarParent(mostArbol(trdEstado(head estado))) ++ ", " 
-                        ++ (show(frhEstado(head estado))) ++ ", "
+                        ++ "[" ++ (formatLista(frhEstado(head estado))) ++ ", "
                         ++ quitarParent(mostArbol(fveEstado(head estado))) ++ " }"
 
+formatLista :: [String] -> String -- Dar formato a una lista y devolverla como string
+formatLista [] = "]"
+formatLista (x:[]) = x ++ "]"
+formatLista (x:xs) = x ++ ", " ++ (formatLista xs)
 
 {--2. Elabore una función crearArbol que tome una tira de caracteres con una 
 operación binaria simple ("operando  operación  operando") y devuelva un árbol 
@@ -404,10 +389,10 @@ evalArb :: Arbol -> [(String, Int)] -> Int
 evalArb (Hoja valor) tupla = if esInt(obtValorHoja(valor)) == False --si es variable/incognita
                                     then (obtenerValor (obtValorHoja(valor)) tupla) --devuelva el valor asosiado de la tupla: "b" [("a", 1), ("b", 2)]
                                     else (convAInt (obtValorHoja(valor))) --si es numero dejelo asi y conviertalo en Int
-evalArb (Nodo operador izq der) tupla
-   | obtOperacionStr(operador) == "+" = (operador) (evalArb izq tupla) (evalArb der tupla)
-   | obtOperacionStr(operador) == "-" = (operador) (evalArb izq tupla) (evalArb der tupla)
-   | obtOperacionStr(operador) == "*" = (operador) (evalArb izq tupla) (evalArb der tupla)
+evalArb (Nodo operador izq der) tupla = (operador) (evalArb izq tupla) (evalArb der tupla)
+   -- obtOperacionStr(operador) == "+" = (operador) (evalArb izq tupla) (evalArb der tupla)
+   -- obtOperacionStr(operador) == "-" = (operador) (evalArb izq tupla) (evalArb der tupla)
+   -- obtOperacionStr(operador) == "*" = (operador) (evalArb izq tupla) (evalArb der tupla)
 
 
 convAInt :: String -> Int --Convertir de String a Int
